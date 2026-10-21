@@ -24,8 +24,14 @@ function fallbackDate(parent, settings) {
 }
 
 function resolveDate(parent, settings, choices, pending) {
-  const r = parseDate(parent.dateRaw);
-  if (r.kind === 'ok') return { year: r.year, source: 'property' };
+  // пробуем свойства по приоритету: первое, которое удалось прочитать, побеждает
+  const raws = parent.dateRaws || (parent.dateRaw !== undefined ? [parent.dateRaw] : []);
+  let r = { kind: 'empty' };
+  for (const raw of raws) {
+    const cur = parseDate(raw);
+    if (cur.kind === 'ok') return { year: cur.year, source: 'property' };
+    if (r.kind === 'empty' && cur.kind !== 'empty') r = cur;
+  }
   if (r.kind === 'empty') return fallbackDate(parent, settings);
 
   if (r.kind === 'ambiguous') {

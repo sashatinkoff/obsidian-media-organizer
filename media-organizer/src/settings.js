@@ -2,10 +2,11 @@
 
 const { PluginSettingTab, Setting, Notice } = require('obsidian');
 const { renderFolderPicker } = require('./folderSuggest');
+const { renderPropertyPicker } = require('./propertyPicker');
 
 const DEFAULT_SETTINGS = {
   folders: [],
-  dateProperty: 'date',
+  dateProperties: ['date', 'Дата'],
   extensions: 'jpg, jpeg, png, gif, webp, bmp, avif, heic, heif, tiff, mp4, mov, mkv, webm, avi, m4v, mpg, mpeg, 3gp',
   indexPad: 3,
   lowercaseNames: false,
@@ -30,10 +31,10 @@ class OrganizerSettingTab extends PluginSettingTab {
     ).setHeading();
     renderFolderPicker(containerEl, this.app, this.plugin);
 
-    new Setting(containerEl)
-      .setName('Свойство с датой')
-      .setDesc('Поле в свойствах родительской заметки. Формат может быть любым. Нет поля — берётся дата создания заметки.')
-      .addText((t) => t.setPlaceholder('date').setValue(s.dateProperty).onChange(async (v) => { s.dateProperty = v.trim(); await save(); }));
+    new Setting(containerEl).setName('Свойства с датой').setDesc(
+      'Поля свойств родительской заметки, по приоритету: используется первое, которое удалось прочитать. Форматы могут быть разными. Ничего не нашлось — дата создания заметки.'
+    ).setHeading();
+    renderPropertyPicker(containerEl, this.app, this.plugin);
 
     new Setting(containerEl)
       .setName('Дата создания, если поля нет')

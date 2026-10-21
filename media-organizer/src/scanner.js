@@ -19,6 +19,17 @@ function readProperty(fm, prop) {
   return key ? fm[key] : undefined;
 }
 
+/** Значения всех заданных свойств с датой (в порядке приоритета), пустые пропускаются. */
+function dateValues(fm, settings) {
+  const out = [];
+  for (const prop of settings.dateProperties || []) {
+    const v = readProperty(fm, prop);
+    const empty = v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length);
+    if (!empty) out.push(v);
+  }
+  return out;
+}
+
 /** Позиция каждого вложения/ссылки в заметке — чтобы индексы шли в порядке появления. */
 function linkOrder(app, note) {
   const cache = app.metadataCache.getFileCache(note);
@@ -89,7 +100,7 @@ function collectEntries(app, settings) {
       path: note.path,
       basename: note.basename,
       ctime: note.stat.ctime,
-      dateRaw: readProperty(fm, settings.dateProperty),
+      dateRaws: dateValues(fm, settings),
       order: lo.order,
       embeds: lo.embeds,
     };
@@ -102,7 +113,7 @@ function collectEntries(app, settings) {
       .map(info)
       .filter(Boolean)
       .map((n) => ({
-        path: n.path, basename: n.basename, ctime: n.ctime, dateRaw: n.dateRaw,
+        path: n.path, basename: n.basename, ctime: n.ctime, dateRaws: n.dateRaws,
         order: n.order.has(f.path) ? n.order.get(f.path) : 1e9,
         embedded: n.embeds.has(f.path),
       }));

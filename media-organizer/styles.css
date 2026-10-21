@@ -86,3 +86,4 @@
 .mo-pg:disabled { opacity: .4; cursor: default; }
 .mo-pg-label { color: var(--mo-sub); padding: 0 6px; }
 .mo-settings .mo-folders { margin-bottom: 18px; }
+.mo-chip-up { cursor: pointer; color: var(--mo-primary, #c0c1ff); }

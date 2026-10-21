@@ -24,6 +24,11 @@ module.exports = {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
     this.settings.folders = Array.isArray(data.folders) ? data.folders : [];
     this.settings.savedChoices = data.savedChoices || {};
+    // миграция: раньше было одно свойство
+    if (!Array.isArray(data.dateProperties)) {
+      this.settings.dateProperties = data.dateProperty ? [data.dateProperty] : DEFAULT_SETTINGS.dateProperties.slice();
+    }
+    delete this.settings.dateProperty;
   },
 
   async saveSettings() {

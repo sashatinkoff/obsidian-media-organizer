@@ -6,6 +6,7 @@ const { buildPlan } = require('./planner');
 const { executePlan } = require('./executor');
 const { AmbiguityModal, ConfirmModal } = require('./modals');
 const { renderFolderPicker } = require('./folderSuggest');
+const { renderPropertyPicker } = require('./propertyPicker');
 const { sanitizeBase, indexedName } = require('./namer');
 
 const VIEW_TYPE = 'media-organizer-view';
@@ -202,9 +203,8 @@ class OrganizerView extends ItemView {
 
     const row = panel.createDiv({ cls: 'mo-row2' });
     const c1 = row.createDiv({ cls: 'mo-card' });
-    c1.createDiv({ cls: 'mo-label', text: 'Свойство с датой' });
-    const dateInput = c1.createEl('input', { type: 'text', cls: 'mo-input', value: s.dateProperty });
-    dateInput.addEventListener('change', async () => { s.dateProperty = dateInput.value.trim(); await this.plugin.saveSettings(); });
+    c1.createDiv({ cls: 'mo-label', text: 'Свойства с датой (по приоритету)' });
+    renderPropertyPicker(c1, this.app, this.plugin);
 
     const c2 = row.createDiv({ cls: 'mo-card' });
     c2.createDiv({ cls: 'mo-label', text: 'Пример имени' });
