@@ -70,7 +70,7 @@ function buildPlan(entries, settings, choices, exists) {
 
     if (!e.parents.length) {
       item.status = 'orphan';
-      item.reason = 'Файл не вставлен ни в одну заметку';
+      item.reason = 'Файл не вставлен ни в одну заметку (см. вкладку «Без ссылок»)';
       continue;
     }
     const sorted = e.parents.slice().sort((a, b) => a.ctime - b.ctime || a.path.localeCompare(b.path));
@@ -84,6 +84,8 @@ function buildPlan(entries, settings, choices, exists) {
       continue;
     }
     const p = parents[0];
+    item.textNotes = e.parents.filter((x) => x.textRef).map((x) => x.path);
+    if (item.textNotes.length) item.hint = 'Упоминание в тексте заметки (не вики-ссылка) плагин обновит сам';
     item.parent = p.path;
     item.parentName = p.basename;
 

@@ -8,11 +8,20 @@ const { AmbiguityModal, ConfirmModal } = require('./modals');
 const { renderFolderPicker } = require('./folderSuggest');
 const { renderPropertyPicker } = require('./propertyPicker');
 const { sanitizeBase, indexedName } = require('./namer');
+const { renderOrphansTab, initState, scanOrphans } = require('./tabOrphans');
+const { renderStatsTab } = require('./tabStats');
+const { organizeRun } = require('./stats');
+const { attachTextParents } = require('./orphans');
 
 const VIEW_TYPE = 'media-organizer-view';
 const IMG = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'avif']);
 const VID = new Set(['mp4', 'mov', 'webm', 'm4v']);
 const PAGE_SIZE = 25;
+const TABS = [
+  ['organize', 'Уборка', 'folder-tree'],
+  ['orphans', 'Без ссылок', 'unlink'],
+  ['stats', 'Статистика', 'activity'],
+];
 
 const STATUS = {
   ready: ['К переносу', 'ok'], inplace: ['На месте', 'muted'], conflict: ['Конфликт', 'err'],
@@ -38,6 +47,8 @@ class OrganizerView extends ItemView {
     this.busy = false;
     this.progress = null;
     this.log = 'Выберите папки и нажмите «Сканировать».';
+    this.tab = 'organize';
+    this.orph = initState();
   }
 
   getViewType() { return VIEW_TYPE; }
@@ -87,6 +98,7 @@ class OrganizerView extends ItemView {
     this.render();
     try {
       this.entries = collectEntries(this.app, s);
+      await attachTextParents(this.app, s, this.entries, (done, total) => this.setLog(`Проверяю заметки: ${done} из ${total}`));
       let plan = this.makePlan();
       if (plan.pending.length) {
         const res = await new AmbiguityModal(this.app, plan.pending).openAndWait();
@@ -121,14 +133,19 @@ class OrganizerView extends ItemView {
     if (!ok) return;
 
     this.busy = true;
+    for (const it of sel) {
+      const f = this.app.vault.getAbstractFileByPath(it.oldPath);
+      it.size = f && f.stat ? f.stat.size : 0;
+    }
     this.progress = { done: 0, total: sel.length };
     this.render();
     const res = await executePlan(this.app, sel, (done, total) => {
       this.progress = { done, total };
       this.updateProgress();
     });
-    this.plugin.settings.history = { at: Date.now(), moves: res.moves };
-    await this.plugin.saveSettings();
+    this.plugin.settings.history = { at: Date.now(), moves: res.moves, edits: res.edits };
+    if (res.moves.length || res.failed.length) await this.plugin.recordRun(organizeRun(sel, res.failed.length));
+    else await this.plugin.saveSettings();
     this.busy = false;
     this.progress = null;
     this.setLog(`Готово: перенесено ${res.moves.length}, ошибок ${res.failed.length}.`);
@@ -150,7 +167,11 @@ class OrganizerView extends ItemView {
   render() {
     const el = this.contentEl;
     el.empty();
-    this.renderHeader(el);
+    this.renderTitle(el);
+    this.renderTabs(el);
+    if (this.tab === 'orphans') { renderOrphansTab(this, el); return; }
+    if (this.tab === 'stats') { renderStatsTab(this, el); return; }
+    this.renderToolbar(el);
     const top = el.createDiv({ cls: 'mo-top' });
     this.renderConfig(top);
     this.renderProgress(top);
@@ -158,15 +179,34 @@ class OrganizerView extends ItemView {
     this.renderFooter(el);
   }
 
-  renderHeader(el) {
+  renderTitle(el) {
     const head = el.createDiv({ cls: 'mo-header' });
     const left = head.createDiv();
     const crumbs = left.createDiv({ cls: 'mo-crumbs' });
     crumbs.createSpan({ text: 'Хранилище / Плагины / ' });
     crumbs.createSpan({ cls: 'mo-crumb-active', text: 'Media Organizer' });
     crumbs.createSpan({ cls: 'mo-dot' });
+    const ver = this.plugin.manifest && this.plugin.manifest.version;
+    if (ver) crumbs.createSpan({ cls: 'mo-muted', text: 'v' + ver });
     left.createEl('h1', { cls: 'mo-title', text: 'Уборка галереи' });
+  }
 
+  renderTabs(el) {
+    const bar = el.createDiv({ cls: 'mo-tabs' });
+    for (const [id, label, icon] of TABS) {
+      const tab = bar.createDiv({ cls: 'mo-tab' + (this.tab === id ? ' is-active' : '') });
+      setIcon(tab.createSpan({ cls: 'mo-ico' }), icon);
+      const n = id === 'orphans' && this.orph.scanned ? ` · ${this.orph.items.length}` : '';
+      tab.createSpan({ text: label + n });
+      tab.addEventListener('click', () => {
+        if (this.busy || this.tab === id) return;
+        this.tab = id;
+        this.render();
+      });
+    }
+  }
+
+  renderToolbar(el) {
     const bar = el.createDiv({ cls: 'mo-toolbar' });
     const chips = bar.createDiv({ cls: 'mo-chips' });
     const counts = this.counts();
@@ -306,7 +346,12 @@ class OrganizerView extends ItemView {
     const names = row.createDiv({ cls: 'mo-names' });
     names.createDiv({ cls: 'mo-old', text: it.oldPath });
     if (it.newPath !== it.oldPath) names.createDiv({ cls: 'mo-new', text: '→ ' + it.newPath });
+    if (it.hint) names.createDiv({ cls: 'mo-muted', text: it.hint });
     if (it.reason) names.createDiv({ cls: 'mo-reason', text: it.reason });
+    if (it.status === 'orphan') {
+      const go = names.createEl('button', { cls: 'mo-link', text: 'Показать на вкладке «Без ссылок» →' });
+      go.addEventListener('click', () => { this.tab = 'orphans'; scanOrphans(this); });
+    }
 
     const note = row.createDiv({ cls: 'mo-note' });
     note.createDiv({ text: it.parentName || '—' });

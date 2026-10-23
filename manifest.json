@@ -1,0 +1,9 @@
+{
+  "id": "media-organizer",
+  "name": "Media Organizer",
+  "version": "1.1.1",
+  "minAppVersion": "1.4.10",
+  "description": "Прибирается в галерее: переименовывает фото и видео по названию заметки с индексом, раскладывает по папкам-годам, находит медиа без ссылок и ведёт статистику уборок.",
+  "author": "Media Organizer",
+  "isDesktopOnly": false
+}

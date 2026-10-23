@@ -4,6 +4,7 @@ const { Notice } = require('obsidian');
 const { OrganizerView, VIEW_TYPE } = require('./view');
 const { OrganizerSettingTab, DEFAULT_SETTINGS } = require('./settings');
 const { undoMoves } = require('./executor');
+const { undoRun, MAX_RUNS } = require('./stats');
 
 module.exports = {
   async start() {
@@ -24,6 +25,7 @@ module.exports = {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
     this.settings.folders = Array.isArray(data.folders) ? data.folders : [];
     this.settings.savedChoices = data.savedChoices || {};
+    this.settings.stats = { runs: data.stats && Array.isArray(data.stats.runs) ? data.stats.runs : [] };
     // миграция: раньше было одно свойство
     if (!Array.isArray(data.dateProperties)) {
       this.settings.dateProperties = data.dateProperty ? [data.dateProperty] : DEFAULT_SETTINGS.dateProperties.slice();
@@ -33,6 +35,14 @@ module.exports = {
 
   async saveSettings() {
     await this.saveData(this.settings);
+  },
+
+  /** Добавляет запись о запуске в статистику и сохраняет настройки. */
+  async recordRun(run) {
+    const runs = this.settings.stats.runs;
+    runs.push(run);
+    if (runs.length > MAX_RUNS) runs.splice(0, runs.length - MAX_RUNS);
+    await this.saveSettings();
   },
 
   async activateView() {
@@ -48,9 +58,9 @@ module.exports = {
   async undoLast() {
     const h = this.settings.history;
     if (!h || !h.moves || !h.moves.length) { new Notice('Нечего отменять'); return null; }
-    const r = await undoMoves(this.app, h.moves);
+    const r = await undoMoves(this.app, h.moves, h.edits);
     this.settings.history = null;
-    await this.saveSettings();
+    await this.recordRun(undoRun(r.restored, r.skipped));
     new Notice(`Отменено: возвращено ${r.restored}, пропущено ${r.skipped}`);
     return r;
   },

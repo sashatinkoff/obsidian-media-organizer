@@ -3,9 +3,9 @@
 const { Modal, Setting } = require('obsidian');
 
 class ConfirmModal extends Modal {
-  constructor(app, title, text, okLabel) {
+  constructor(app, title, text, okLabel, danger) {
     super(app);
-    this.title = title; this.text = text; this.okLabel = okLabel || 'Продолжить';
+    this.title = title; this.text = text; this.okLabel = okLabel || 'Продолжить'; this.danger = !!danger;
     this.result = false;
   }
   openAndWait() {
@@ -16,7 +16,10 @@ class ConfirmModal extends Modal {
     this.contentEl.createEl('p', { text: this.text });
     new Setting(this.contentEl)
       .addButton((b) => b.setButtonText('Отмена').onClick(() => this.close()))
-      .addButton((b) => b.setButtonText(this.okLabel).setCta().onClick(() => { this.result = true; this.close(); }));
+      .addButton((b) => {
+        if (this.danger) b.setWarning(); else b.setCta();
+        b.setButtonText(this.okLabel).onClick(() => { this.result = true; this.close(); });
+      });
   }
   onClose() { this.contentEl.empty(); this.resolve(this.result); }
 }

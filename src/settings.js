@@ -14,6 +14,9 @@ const DEFAULT_SETTINGS = {
   multiParent: 'skip',
   savedChoices: {},
   history: null,
+  allowOrphanDelete: false,
+  reportFolder: 'Media Organizer',
+  stats: { runs: [] },
 };
 
 class OrganizerSettingTab extends PluginSettingTab {
@@ -64,6 +67,18 @@ class OrganizerSettingTab extends PluginSettingTab {
       .setName('Расширения медиафайлов')
       .setDesc('Через запятую.')
       .addTextArea((t) => t.setValue(s.extensions).onChange(async (v) => { s.extensions = v; await save(); }));
+
+    new Setting(containerEl).setName('Медиа без ссылок и статистика').setHeading();
+
+    new Setting(containerEl)
+      .setName('Разрешить удаление медиа без ссылок')
+      .setDesc('Включает кнопки удаления на вкладке «Без ссылок». Файлы уходят в корзину по настройке Obsidian «Удалённые файлы». Выключено по умолчанию.')
+      .addToggle((t) => t.setValue(s.allowOrphanDelete).onChange(async (v) => { s.allowOrphanDelete = v; await save(); }));
+
+    new Setting(containerEl)
+      .setName('Папка для инфографики')
+      .setDesc('Сюда кнопка «Сохранить инфографику» на вкладке «Статистика» кладёт SVG-вложение. Пусто — корень хранилища.')
+      .addText((t) => t.setPlaceholder('Media Organizer').setValue(s.reportFolder).onChange(async (v) => { s.reportFolder = v.trim(); await save(); }));
 
     new Setting(containerEl)
       .setName('Сбросить запомненные ответы о датах')

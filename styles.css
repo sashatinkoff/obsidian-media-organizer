@@ -87,3 +87,30 @@
 .mo-pg-label { color: var(--mo-sub); padding: 0 6px; }
 .mo-settings .mo-folders { margin-bottom: 18px; }
 .mo-chip-up { cursor: pointer; color: var(--mo-primary, #c0c1ff); }
+
+/* вкладки */
+.mo-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--mo-line); margin-bottom: 20px; }
+.mo-tab { display: flex; gap: 8px; align-items: center; padding: 10px 16px; cursor: pointer; color: var(--mo-sub); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.mo-tab:hover { color: var(--mo-text); }
+.mo-tab.is-active { color: var(--mo-primary); border-bottom-color: var(--mo-primary); font-weight: 600; }
+
+/* вкладка «Без ссылок» */
+.mo-btn.danger { background: rgba(255,180,171,.12); color: var(--mo-err); border-color: rgba(255,180,171,.4); }
+.mo-sortrow { display: flex; gap: 12px; align-items: center; margin-top: 12px; }
+.mo-sortrow .mo-label { margin: 0; }
+.mo-tr-orph { grid-template-columns: 28px 56px minmax(0, 3fr) minmax(0, 1fr) 84px; }
+.mo-clickable { cursor: pointer; }
+.mo-row-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.mo-icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; border-radius: 4px; background: var(--mo-input); color: var(--mo-sub); border: 1px solid var(--mo-line); cursor: pointer; box-shadow: none; }
+.mo-icon-btn svg { width: 15px; height: 15px; }
+.mo-icon-btn:hover { color: var(--mo-text); }
+.mo-icon-btn.danger { color: var(--mo-err); }
+.mo-icon-btn:disabled { opacity: .4; cursor: default; }
+
+/* вкладка «Статистика» */
+.mo-infographic { margin-bottom: 20px; }
+.mo-runs { border-radius: 16px; margin-bottom: 20px; }
+.mo-tr-run { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.2fr) 80px 110px 70px; }
+
+.mo-link { background: none; border: 0; box-shadow: none; padding: 0; height: auto; color: var(--mo-primary); cursor: pointer; font-size: 12px; text-align: left; }
+.mo-link:hover { text-decoration: underline; }

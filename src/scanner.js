@@ -128,4 +128,4 @@ function collectEntries(app, settings) {
   });
 }
 
-module.exports = { collectEntries, extensionSet };
+module.exports = { collectEntries, extensionSet, dateValues };
